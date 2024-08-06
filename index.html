@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construtor de Apresentação de Slides</title>
+    <style>
+        body {
+            display: flex;
+            margin: 0;
+            height: 100vh;
+            font-family: 'Orbitron', sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .editor {
+            width: 50%;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #fff;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+        .editor label {
+            display: block;
+            margin-top: 10px;
+        }
+        .editor input, .editor textarea, .editor select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .editor button {
+            padding: 10px 20px;
+            margin-top: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+            background: linear-gradient(45deg, #000, #555);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+        .editor button:hover {
+            background: linear-gradient(45deg, #333, #777);
+        }
+        .preview {
+            width: 50%;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #000;
+            border-left: 1px solid #ccc;
+            overflow: hidden;
+            position: relative;
+        }
+        .preview.active {
+            border: 2px solid blue;
+        }
+        .html-output {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e9e9e9;
+            border: 1px solid #ccc;
+            white-space: pre-wrap;
+            font-family: monospace;
+            height: 200px;
+            overflow-y: auto;
+        }
+        iframe {
+            background-color: #000;
+            width: 100%;
+            height: 80%;
+            border: none;
+            aspect-ratio: 16 / 9;
+        }
+        h1 {
+            font-size: 2em;
+            text-transform: uppercase;
+            margin: 0.5em 0;
+        }
+        .text {
+            text-align: justify;
+        }
+        .content.centered {
+            flex-direction: column;
+            align-items: center;
+        }
+        .content img {
+            margin-top: 20px;
+            max-width: 100%;
+            height: auto;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .image.centered img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="editor">
+        <h2>Editor</h2>
+        <form id="dataForm">
+            <div class="form-group">
+                <label for="slideTitle">Título do Slide</label>
+                <input type="text" id="slideTitle" name="slideTitle" placeholder="Digite o título do slide...">
+            </div>
+            
+            <div class="form-group">
+                <label for="slideText">Texto do Slide</label>
+                <button type="button" onclick="toggleListOptions()">Lista</button>
+                <select id="listOptions" style="display:none;" onchange="setListType()">
+                    <option value="">Selecione</option>
+                    <option value="ordered">Lista Ordenada</option>
+                    <option value="unordered">Lista Não Ordenada</option>
+                </select>
+                <button type="button" onclick="toggleTextAlignOptions()">Alinhamento de Texto</button>
+                <select id="textAlignOptions" style="display:none;" onchange="setTextAlign()">
+                    <option value="">Selecione</option>
+                    <option value="left">Texto Alinhado à Esquerda</option>
+                    <option value="center">Texto Centralizado</option>
+                    <option value="right">Texto Alinhado à Direita</option>
+                    <option value="justify">Texto Justificado</option>
+                </select>
+                <textarea id="slideText" name="slideText" rows="5" placeholder="Digite o texto do slide..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="imageURL">URL da Imagem</label>
+                <input type="text" id="imageURL" name="imageURL" placeholder="Digite a URL da imagem...">
+            </div>
+
+            <div class="form-group">
+                <button type="button" onclick="toggleImageAlignOptions()">Alinhamento da Imagem</button>
+                <select id="imageAlignOptions" style="display:none;" onchange="setImageAlign()">
+                    <option value="">Selecione</option>
+                    <option value="left">Alinhado à Esquerda</option>
+                    <option value="center">Centralizado</option>
+                    <option value="right">Alinhado à Direita</option>
+                </select>
+            </div>
+
+            <button type="button" onclick="previewSlide()">Prévia</button>
+            <button type="button" onclick="generateSlide()">Gerar Slide</button>
+            <button type="button" onclick="savePreview()">Salvar Prévia</button>
+            <button type="button" onclick="copyToClipboard()">Copiar HTML</button>
+            <button type="button" onclick="clearHtmlOutput()">Apagar Código</button>
+        </form>
+
+        <div class="html-output" id="htmlOutput"></div>
+    </div>
+    <div class="preview" id="previewArea" onclick="activatePreview()">
+        <h2>Prévia</h2>
+        <iframe id="previewFrame"></iframe>
+    </div>
+
+    <script>
+        let slideCounter = 0;
+        let slides = [];
+        let currentSlideIndex = 0;
+        let previewContent = '';
+        let listType = '';
+        let textAlign = '';
+        let imageAlign = '';
+
+        function toggleListOptions() {
+            const listOptions = document.getElementById('listOptions');
+            listOptions.style.display = listOptions.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function setListType() {
+            listType = document.getElementById('listOptions').value;
+        }
+
+        function toggleTextAlignOptions() {
+            const textAlignOptions = document.getElementById('textAlignOptions');
+            textAlignOptions.style.display = textAlignOptions.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function setTextAlign() {
+            textAlign = document.getElementById('textAlignOptions').value;
+        }
+
+        function toggleImageAlignOptions() {
+            const imageAlignOptions = document.getElementById('imageAlignOptions');
+            imageAlignOptions.style.display = imageAlignOptions.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function setImageAlign() {
+            imageAlign = document.getElementById('imageAlignOptions').value;
+        }
+
+        function formatText(text) {
+            const lines = text.split('\n');
+            let formattedText = '';
+
+            if (listType === 'ordered') {
+                formattedText += '<ol>';
+            } else if (listType === 'unordered') {
+                formattedText += '<ul>';
+            }
+
+            lines.forEach(line => {
+                if (line.trim() !== '') {
+                    if (listType === 'ordered' || listType === 'unordered') {
+                        formattedText += `<li>${line.trim()}</li>`;
+                    } else {
+                        formattedText += `<p style="text-align:${textAlign};">${line}</p>`;
+                    }
+                } else {
+                    formattedText += '<br>';
+                }
+            });
+
+            if (listType === 'ordered') {
+                formattedText += '</ol>';
+            } else if (listType === 'unordered') {
+                formattedText += '</ul>';
+            }
+
+            return formattedText;
+        }
+
+        function previewSlide() {
+            const slideTitle = document.getElementById('slideTitle').value;
+            const slideText = document.getElementById('slideText').value;
+            const imageURL = document.getElementById('imageURL').value;
+
+            let contentPosition = 'right';
+            if (slideCounter % 2 === 0) {
+                contentPosition = 'left';
+            }
+
+            const formattedText = slideText.trim() !== '' ? `<div class="text">${formatText(slideText)}</div>` : '';
+
+            previewContent = `
+                <div class="slide ${!slideText && imageURL ? 'centered' : ''}">
+                    <h1>${slideTitle}</h1>
+                    <div class="content ${!slideText && imageURL ? 'centered' : contentPosition}">
+                        ${formattedText}
+                        ${imageURL ? `<div class="image ${!slideText ? 'centered' : ''}" style="text-align:${imageAlign};"><img src="${imageURL}" alt="Imagem do Slide"></div>` : ''}
+                    </div>
+                </div>
+            `;
+
+            updatePreview(previewContent);
+        }
+
+        function generateSlide() {
+            const slideTitle = document.getElementById('slideTitle').value;
+            const slideText = document.getElementById('slideText').value;
+            const imageURL = document.getElementById('imageURL').value;
+
+            let contentPosition = 'right';
+            if (slideCounter % 2 === 0) {
+                contentPosition = 'left';
+            }
+            slideCounter++;
+
+            const formattedText = slideText.trim() !== '' ? `<div class="text">${formatText(slideText)}</div>` : '';
+
+            const slideContent = `
+                <div class="slide ${!slideText && imageURL ? 'centered' : ''}">
+                    <h1>${slideTitle}</h1>
+                    <div class="content ${!slideText && imageURL ? 'centered' : contentPosition}">
+                        ${formattedText}
+                        ${imageURL ? `<div class="image ${!slideText ? 'centered' : ''}" style="text-align:${imageAlign};"><img src="${imageURL}" alt="Imagem do Slide"></div>` : ''}
+                    </div>
+                </div>
+            `;
+
+            slides.push(slideContent);
+            updateHtmlOutput();
+            clearForm();
+        }
+
+        function savePreview() {
+            slides.push(previewContent);
+            updateHtmlOutput();
+            clearForm();
+        }
+
+        function updateHtmlOutput() {
+            let htmlContent = `
+                <!DOCTYPE html>
+                <html lang="pt-BR">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Apresentação de Slides</title>
+                    <style>
+                        body { font-family: 'Orbitron', sans-serif; padding: 20px; margin: 0; background-color: black; color: white; text-align: center; }
+                        .slide { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; }
+                        .centered { justify-content: center; align-items: center; text-align: center; }
+                        .content { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+                        .content.left .text { order: 1; text-align: right; }
+                        .content.left .image { order: 2; }
+                        .content.right .text { order: 2; text-align: left; }
+                        .content.right .image { order: 1; }
+                        .text, .image { width: 50%; text-align: justify; margin-right: 20px; }
+                        ul, ol { text-align: left; }
+                        img { max-width: 100%; height: auto; margin-top: 20px; }
+                        h1 { font-size: 2em; text-transform: uppercase; margin: 0.5em 0; }
+                    </style>
+                </head>
+                <body>
+                    ${slides.join('')}
+                </body>
+                </html>
+            `;
+
+            document.getElementById('htmlOutput').textContent = htmlContent;
+        }
+
+        function updatePreview(content) {
+            const previewFrame = document.getElementById('previewFrame');
+            let htmlContent = `
+                <!DOCTYPE html>
+                <html lang="pt-BR">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Apresentação de Slides</title>
+                    <style>
+                        body { font-family: 'Orbitron', sans-serif; padding: 20px; margin: 0; background-color: black; color: white; text-align: center; }
+                        .slide { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; }
+                        .centered { justify-content: center; align-items: center; text-align: center; }
+                        .content { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+                        .content.left .text { order: 1; text-align: right; }
+                        .content.left .image { order: 2; }
+                        .content.right .text { order: 2; text-align: left; }
+                        .content.right .image { order: 1; }
+                        .text, .image { width: 50%; text-align: justify; margin-right: 20px; }
+                        ul, ol { text-align: left; }
+                        img { max-width: 100%; height: auto; margin-top: 20px; }
+                        h1 { font-size: 2em; text-transform: uppercase; margin: 0.5em 0; }
+                    </style>
+                </head>
+                <body>
+                    ${content}
+                </body>
+                </html>
+            `;
+
+            previewFrame.contentDocument.open();
+            previewFrame.contentDocument.write(htmlContent);
+            previewFrame.contentDocument.close();
+        }
+
+        function activatePreview() {
+            document.getElementById('previewArea').classList.add('active');
+            document.addEventListener('keydown', handleKeydown);
+        }
+
+        function handleKeydown(event) {
+            if (event.key === 'ArrowRight') {
+                nextSlide();
+            } else if (event.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlideIndex < slides.length - 1) {
+                currentSlideIndex++;
+                updatePreview(slides[currentSlideIndex]);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlideIndex > 0) {
+                currentSlideIndex--;
+                updatePreview(slides[currentSlideIndex]);
+            }
+        }
+
+        function copyToClipboard() {
+            const htmlOutput = document.getElementById('htmlOutput');
+            const range = document.createRange();
+            range.selectNode(htmlOutput);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+            alert('Código HTML copiado para a área de transferência!');
+        }
+
+        function clearHtmlOutput() {
+            document.getElementById('htmlOutput').textContent = '';
+            slides = [];
+        }
+
+        function clearForm() {
+            document.getElementById('slideTitle').value = '';
+            document.getElementById('slideText').value = '';
+            document.getElementById('imageURL').value = '';
+            listType = '';
+            textAlign = '';
+            imageAlign = '';
+            document.getElementById('listOptions').style.display = 'none';
+            document.getElementById('listOptions').value = '';
+            document.getElementById('textAlignOptions').style.display = 'none';
+            document.getElementById('textAlignOptions').value = '';
+            document.getElementById('imageAlignOptions').style.display = 'none';
+            document.getElementById('imageAlignOptions').value = '';
+        }
+    </script>
+</body>
+</html>
