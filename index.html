@@ -1,17 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor de Slides</title>
+    <meta name="description" content="Editor de slides interativo para criação de apresentações personalizadas.">
+    <meta name="keywords" content="editor de slides, apresentações, HTML, CSS, JavaScript">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
         
+        :root {
+            --primary-color: #0ff;
+            --background-color: #0d0d0d;
+            --text-color: #fff;
+            --font-orbitron: 'Orbitron', sans-serif;
+            --font-roboto: 'Roboto', sans-serif;
+        }
+
         body {
             display: flex;
             flex-direction: row;
-            font-family: Arial, sans-serif;
+            font-family: var(--font-roboto);
             margin: 0;
             padding: 0;
             height: 100vh;
@@ -23,10 +33,11 @@
         }
         .preview-container {
             background-color: #1e1e1e;
-            color: white;
+            color: var(--text-color);
         }
         h2 {
             margin-top: 0;
+            font-family: var(--font-orbitron);
         }
         .input-group {
             margin-bottom: 20px;
@@ -42,6 +53,7 @@
             box-sizing: border-box;
             border: 1px solid #ccc;
             border-radius: 5px;
+            font-family: var(--font-roboto);
         }
         .input-group textarea {
             height: 100px;
@@ -56,8 +68,9 @@
             border: none;
             border-radius: 5px;
             background-color: #333;
-            color: white;
+            color: var(--text-color);
             cursor: pointer;
+            font-family: var(--font-roboto);
         }
         .button-group button:hover {
             background-color: #555;
@@ -76,9 +89,8 @@
             margin-top: 20px;
             height: calc(100% - 40px);
             overflow: auto;
-        }
-        .hidden {
-            display: none;
+            font-family: monospace;
+            white-space: pre-wrap;
         }
         .modal {
             display: none;
@@ -92,18 +104,19 @@
             background-color: rgba(0, 0, 0, 0.5);
         }
         .modal-content {
-            background-color: white;
+            background-color: var(--text-color);
             margin: 15% auto;
             padding: 20px;
             border: 1px solid #888;
             width: 80%;
             max-width: 300px;
+            color: black;
         }
         .modal-content button {
             margin-top: 10px;
             padding: 10px;
             background-color: #333;
-            color: white;
+            color: var(--text-color);
             border: none;
             border-radius: 5px;
             cursor: pointer;
@@ -119,6 +132,40 @@
         #clear-code-btn:hover {
             background-color: red;
         }
+        .message-box {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #0f0;
+            color: #000;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            font-family: var(--font-roboto);
+        }
+        .slide-title {
+            text-align: center;
+            font-family: var(--font-orbitron);
+            color: var(--primary-color);
+        }
+        .slide-text {
+            font-family: var(--font-roboto);
+            color: var(--text-color);
+        }
+        .slide-image {
+            width: 50%;
+            border: 3px solid var(--primary-color);
+            border-radius: 10px;
+        }
+        .slide-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--background-color);
+            padding: 20px;
+            border-radius: 10px;
+            color: var(--text-color);
+        }
 
         @media (max-width: 800px) {
             body {
@@ -129,6 +176,12 @@
             }
             .button-group button {
                 margin: 5px 0;
+            }
+            .slide-container {
+                flex-direction: column;
+            }
+            .slide-image, .slide-text {
+                width: 100%;
             }
         }
     </style>
@@ -171,9 +224,9 @@
     </div>
 
     <!-- Modal for List -->
-    <div id="list-modal" class="modal">
+    <div id="list-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="list-modal-title">
         <div class="modal-content">
-            <label for="list-select">Escolha o tipo de lista:</label>
+            <h2 id="list-modal-title">Escolha o tipo de lista:</h2>
             <select id="list-select">
                 <option value="ul">Lista Não Ordenada</option>
                 <option value="ol">Lista Ordenada</option>
@@ -183,9 +236,9 @@
     </div>
 
     <!-- Modal for Text Align -->
-    <div id="text-align-modal" class="modal">
+    <div id="text-align-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="text-align-modal-title">
         <div class="modal-content">
-            <label for="text-align-select">Escolha o alinhamento de texto:</label>
+            <h2 id="text-align-modal-title">Escolha o alinhamento de texto:</h2>
             <select id="text-align-select">
                 <option value="left">Esquerda</option>
                 <option value="center">Centro</option>
@@ -197,9 +250,9 @@
     </div>
 
     <!-- Modal for Text Position -->
-    <div id="text-position-modal" class="modal">
+    <div id="text-position-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="text-position-modal-title">
         <div class="modal-content">
-            <label for="text-position-select">Escolha o posicionamento do texto:</label>
+            <h2 id="text-position-modal-title">Escolha o posicionamento do texto:</h2>
             <select id="text-position-select">
                 <option value="left">Lado Esquerdo da Imagem</option>
                 <option value="right">Lado Direito da Imagem</option>
@@ -209,9 +262,9 @@
     </div>
 
     <!-- Modal for Image Align -->
-    <div id="image-align-modal" class="modal">
+    <div id="image-align-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="image-align-modal-title">
         <div class="modal-content">
-            <label for="image-align-select">Escolha o alinhamento da imagem:</label>
+            <h2 id="image-align-modal-title">Escolha o alinhamento da imagem:</h2>
             <select id="image-align-select">
                 <option value="center">Centro</option>
                 <option value="left">Esquerda</option>
@@ -221,12 +274,32 @@
         </div>
     </div>
 
+    <!-- Message Box -->
+    <div id="message-box" class="message-box"></div>
+
     <script>
         let slidesCode = '';
         let textPosition = 'left';
+        let imageAlign = 'center';
 
+        function sanitizeInput(input) {
+            return input.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function showMessage(message) {
+            const messageBox = document.getElementById('message-box');
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 3000);
+        }
+
+        // Event Listeners
         document.getElementById('list-btn').addEventListener('click', function() {
-            document.getElementById('list-modal').style.display = 'block';
+            const modal = document.getElementById('list-modal');
+            modal.style.display = 'block';
+            modal.querySelector('#list-select').focus();
         });
 
         document.getElementById('list-ok-btn').addEventListener('click', function() {
@@ -241,7 +314,9 @@
         });
 
         document.getElementById('text-align-btn').addEventListener('click', function() {
-            document.getElementById('text-align-modal').style.display = 'block';
+            const modal = document.getElementById('text-align-modal');
+            modal.style.display = 'block';
+            modal.querySelector('#text-align-select').focus();
         });
 
         document.getElementById('text-align-ok-btn').addEventListener('click', function() {
@@ -251,7 +326,9 @@
         });
 
         document.getElementById('text-position-btn').addEventListener('click', function() {
-            document.getElementById('text-position-modal').style.display = 'block';
+            const modal = document.getElementById('text-position-modal');
+            modal.style.display = 'block';
+            modal.querySelector('#text-position-select').focus();
         });
 
         document.getElementById('text-position-ok-btn').addEventListener('click', function() {
@@ -260,132 +337,137 @@
         });
 
         document.getElementById('image-align-btn').addEventListener('click', function() {
-            document.getElementById('image-align-modal').style.display = 'block';
+            const modal = document.getElementById('image-align-modal');
+            modal.style.display = 'block';
+            modal.querySelector('#image-align-select').focus();
         });
 
         document.getElementById('image-align-ok-btn').addEventListener('click', function() {
-            const imageUrl = document.getElementById('image-url').value;
-            const preview = document.getElementById('slide-preview');
-            const img = preview.querySelector('img');
-            if (img) {
-                const align = document.getElementById('image-align-select').value;
-                img.style.display = 'block';
-                img.style.margin = '10px auto';
-                img.style.float = 'none';
-                if (align === 'left') {
-                    img.style.float = 'left';
-                    img.style.margin = '0 10px 10px 0';
-                } else if (align === 'right') {
-                    img.style.float = 'right';
-                    img.style.margin = '0 0 10px 10px';
-                }
-            }
+            imageAlign = document.getElementById('image-align-select').value;
             document.getElementById('image-align-modal').style.display = 'none';
         });
 
         document.getElementById('preview-btn').addEventListener('click', function() {
-            const title = document.getElementById('slide-title').value.toUpperCase();
-            const text = document.getElementById('slide-text').value;
-            const imageUrl = document.getElementById('image-url').value;
+            const title = sanitizeInput(document.getElementById('slide-title').value.trim().toUpperCase());
+            const text = sanitizeInput(document.getElementById('slide-text').value.trim());
+            const imageUrl = sanitizeInput(document.getElementById('image-url').value.trim());
             const textAlign = document.getElementById('slide-text').style.textAlign || 'left';
             const preview = document.getElementById('slide-preview');
 
-            let textPositionStyle = '';
+            if (!title || !text) {
+                showMessage('Por favor, preencha o título e o texto do slide.');
+                return;
+            }
+
+            let imageHTML = '';
+            if (imageUrl) {
+                imageHTML = `<img src="${imageUrl}" class="slide-image" style="text-align: ${imageAlign};">`;
+            }
+
+            let textHTML = `
+                <div style="width: 50%; padding: 20px;">
+                    <h2 class="slide-title">${title}</h2>
+                    <p class="slide-text" style="text-align: ${textAlign};">${text.replace(/\n/g, '<br>')}</p>
+                </div>
+            `;
+
+            let contentHTML = '';
             if (textPosition === 'left') {
-                textPositionStyle = `
-                    <div style="width: 50%; padding: 20px;">
-                        <h2 style="text-align: center; font-family: 'Orbitron', sans-serif; color: #0ff;">${title}</h2>
-                        <p style="text-align: ${textAlign}; font-family: 'Roboto', sans-serif; color: #fff;">${text.replace(/\n/g, '<br>')}</p>
-                    </div>
-                    ${imageUrl ? `<img src="${imageUrl}" style="width: 50%; display: block; border: 3px solid #0ff; border-radius: 10px;">` : ''}
-                `;
+                contentHTML = `${textHTML}${imageHTML}`;
             } else {
-                textPositionStyle = `
-                    ${imageUrl ? `<img src="${imageUrl}" style="width: 50%; display: block; border: 3px solid #0ff; border-radius: 10px;">` : ''}
-                    <div style="width: 50%; padding: 20px;">
-                        <h2 style="text-align: center; font-family: 'Orbitron', sans-serif; color: #0ff;">${title}</h2>
-                        <p style="text-align: ${textAlign}; font-family: 'Roboto', sans-serif; color: #fff;">${text.replace(/\n/g, '<br>')}</p>
-                    </div>
-                `;
+                contentHTML = `${imageHTML}${textHTML}`;
             }
 
             preview.innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: center; background-color: #0d0d0d; padding: 20px; border-radius: 10px; color: #fff;">
-                    ${textPositionStyle}
+                <div class="slide-container">
+                    ${contentHTML}
                 </div>
             `;
         });
 
         document.getElementById('generate-code-btn').addEventListener('click', function() {
-            const title = document.getElementById('slide-title').value.toUpperCase();
-            const text = document.getElementById('slide-text').value;
-            const imageUrl = document.getElementById('image-url').value;
+            const title = sanitizeInput(document.getElementById('slide-title').value.trim().toUpperCase());
+            const text = sanitizeInput(document.getElementById('slide-text').value.trim());
+            const imageUrl = sanitizeInput(document.getElementById('image-url').value.trim());
             const textAlign = document.getElementById('slide-text').style.textAlign || 'left';
 
-            let textPositionCode = '';
+            if (!title || !text) {
+                showMessage('Por favor, preencha o título e o texto do slide.');
+                return;
+            }
+
+            let imageHTML = '';
+            if (imageUrl) {
+                imageHTML = `<img src="${imageUrl}" class="slide-image" style="text-align: ${imageAlign};">`;
+            }
+
+            let textHTML = `
+                <div style="width: 50%; padding: 20px;">
+                    <h2 class="slide-title">${title}</h2>
+                    <p class="slide-text" style="text-align: ${textAlign};">${text.replace(/\n/g, '<br>')}</p>
+                </div>
+            `;
+
+            let contentHTML = '';
             if (textPosition === 'left') {
-                textPositionCode = `
-                    <div style="width: 50%; float: left;">
-                        <h2 style="text-align: center;">${title}</h2>
-                        <p style="text-align: ${textAlign};">${text.replace(/\n/g, '<br>')}</p>
-                    </div>
-                    ${imageUrl ? `<img src="${imageUrl}" style="width: 50%; float: left; margin-right: 20px; border: 3px solid #0ff; border-radius: 10px;">` : ''}
-                `;
+                contentHTML = `${textHTML}${imageHTML}`;
             } else {
-                textPositionCode = `
-                    ${imageUrl ? `<img src="${imageUrl}" style="width: 50%; float: left; margin-right: 20px; border: 3px solid #0ff; border-radius: 10px;">` : ''}
-                    <div style="width: 50%; float: left;">
-                        <h2 style="text-align: center;">${title}</h2>
-                        <p style="text-align: ${textAlign};">${text.replace(/\n/g, '<br>')}</p>
-                    </div>
-                `;
+                contentHTML = `${imageHTML}${textHTML}`;
             }
 
             const newSlideCode = `
-<div class="slide">
-    ${textPositionCode}
-    <div style="clear: both;"></div>
-</div>
+    <div class="slide">
+        ${contentHTML}
+    </div>
             `;
 
             slidesCode += newSlideCode;
             const codeContainer = document.getElementById('code-container');
             codeContainer.textContent = `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Slide</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        :root {
+            --primary-color: #0ff;
+            --background-color: #0d0d0d;
+            --text-color: #fff;
+            --font-orbitron: 'Orbitron', sans-serif;
+            --font-roboto: 'Roboto', sans-serif;
+        }
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #0d0d0d;
-            color: #fff;
+            font-family: var(--font-roboto);
+            background-color: var(--background-color);
+            color: var(--text-color);
         }
         .slide {
-            background-color: #0d0d0d;
-            padding: 20px;
-            border-radius: 10px;
-            color: #fff;
             display: flex;
             align-items: center;
-        }
-        .slide h2 {
-            text-align: center;
-            font-family: 'Orbitron', sans-serif;
-            color: #0ff;
-        }
-        .slide p {
-            font-family: 'Roboto', sans-serif;
-            color: #fff;
-        }
-        .slide img {
-            width: 50%;
-            float: left;
-            margin-right: 20px;
-            border: 3px solid #0ff;
+            justify-content: center;
+            background-color: var(--background-color);
+            padding: 20px;
             border-radius: 10px;
+            color: var(--text-color);
+        }
+        .slide-title {
+            text-align: center;
+            font-family: var(--font-orbitron);
+            color: var(--primary-color);
+        }
+        .slide-text {
+            font-family: var(--font-roboto);
+            color: var(--text-color);
+        }
+        .slide-image {
+            width: 50%;
+            border: 3px solid var(--primary-color);
+            border-radius: 10px;
+            text-align: ${imageAlign};
         }
     </style>
 </head>
@@ -398,11 +480,23 @@
 
         document.getElementById('copy-html-btn').addEventListener('click', function() {
             const codeContainer = document.getElementById('code-container');
-            navigator.clipboard.writeText(codeContainer.textContent).then(function() {
-                alert('Código HTML copiado para a área de transferência!');
-            }, function(err) {
-                alert('Erro ao copiar código HTML: ', err);
-            });
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(codeContainer.textContent)
+                    .then(() => showMessage('Código copiado com sucesso!'))
+                    .catch(err => showMessage('Erro ao copiar código: ' + err));
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = codeContainer.textContent;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showMessage('Código copiado com sucesso!');
+                } catch (err) {
+                    showMessage('Erro ao copiar código: ' + err);
+                }
+                document.body.removeChild(textarea);
+            }
         });
 
         document.getElementById('new-slide-btn').addEventListener('click', function() {
@@ -419,25 +513,16 @@
             document.getElementById('slide-preview').innerHTML = '';
             slidesCode = '';
             document.getElementById('code-container').textContent = '';
+            showMessage('Código apagado com sucesso!');
         });
 
         window.onclick = function(event) {
-            const listModal = document.getElementById('list-modal');
-            const textAlignModal = document.getElementById('text-align-modal');
-            const imageAlignModal = document.getElementById('image-align-modal');
-            const textPositionModal = document.getElementById('text-position-modal');
-            if (event.target == listModal) {
-                listModal.style.display = 'none';
-            }
-            if (event.target == textAlignModal) {
-                textAlignModal.style.display = 'none';
-            }
-            if (event.target == imageAlignModal) {
-                imageAlignModal.style.display = 'none';
-            }
-            if (event.target == textPositionModal) {
-                textPositionModal.style.display = 'none';
-            }
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            });
         }
     </script>
 </body>
